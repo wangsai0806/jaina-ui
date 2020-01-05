@@ -1,0 +1,30 @@
+{
+  "common": {
+    "home": "首页",
+    "doc": "文档",
+    "blog": "博客"
+  },
+  "sys": {
+    "sysMng": "系统管理",
+    "userMng": "用户管理",
+    "deptMng": "机构管理",
+    "roleMng": "角色管理",
+    "menuMng": "菜单管理",
+    "logMng": "日志管理"
+  },
+  "login": {
+    "account": "账号",
+    "password": "密码",
+    "login": "登 录",
+    "register": "注 册",
+    "cancel": "取消",
+    "reset": "重 置",
+    "logout": "退出",
+    "remember-password": "记住密码",
+    "login-html-title": "系统登录"
+  },
+  "user": {
+    "myMsg": "我的消息",
+    "config": "配置"
+  }
+}
