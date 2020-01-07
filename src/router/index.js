@@ -2,7 +2,7 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import Index from '@/views/index'
 import Login from '@/views/login/login'
-import NotFound from '@/views/error/404'
+// import NotFound from '@/views/error/404'
 
 Vue.use(Router)
 
@@ -11,15 +11,17 @@ export default new Router({
     {
       path: '/',
       name: 'index',
-      component: Index
+      component: Index,
+      hidden: true
     }, {
       path: '/login',
       name: 'login',
-      component: Login
+      component: Login,
+      hidden: true
     }, {
       path: '/404',
       name: '404',
-      component: NotFound
+      component: () => import('@/views/error/404')
     }
   ]
 })
