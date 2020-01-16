@@ -1,4 +1,4 @@
-# dokit-front
+# jaina-ui
 
 #### Build Setup
 ``` bash

@@ -1,9 +1,10 @@
 {
-  "name": "dokit",
+  "name": "jaina-ui",
   "version": "1.0.0",
+  "description": "jaina前台系统",
+  "author": "WangSai <1069531172@qq.com>",
+  "private": true,
   "license": "Apache-2.0",
-  "description": "dokit",
-  "author": "",
   "scripts": {
     "dev": "vue-cli-service serve",
     "build:prod": "vue-cli-service build",
