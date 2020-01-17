@@ -1,5 +1,6 @@
 // 二次封装 axios 模块，包含拦截器等信息。
 import axios from 'axios'
+import qs from 'qs'
 import config from './config'
 import Cookies from 'js-cookie'
 import router from '@/router'
@@ -8,7 +9,6 @@ import { Message } from 'element-ui'
 // 使用vuex做全局loading时使用
 // import store from '@/store'
 export default function $axios (options) {
-  debugger
   return new Promise((resolve, reject) => {
     const instance = axios.create({
       // `baseURL` 将自动加在 `url` 前面，除非 `url` 是一个绝对 URL。
@@ -70,16 +70,15 @@ export default function $axios (options) {
     // request 拦截器
     instance.interceptors.request.use(
       config => {
-        debugger
         let token = Cookies.get('token')
         // 1. 请求开始的时候可以结合 vuex 开启全屏 loading 动画
         // console.log(store.state.loading)
         // 2. 带上token
         if (token) {
           config.headers.accessToken = token
-        } else {
-          // 重定向到登录页面
-          router.push('/login')
+        }
+        if (config.method === 'post') {
+          config.data = qs.stringify(config.data)
         }
         return config
       },

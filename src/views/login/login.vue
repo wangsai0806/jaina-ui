@@ -18,8 +18,7 @@
 </template>
 
 <script>
-import Cookies from 'js-cookie'
-import '@/mock/user.js'
+// import '@/mock/user.js'
 export default {
   name: 'Login',
   data () {
@@ -27,7 +26,7 @@ export default {
       logining: false,
       loginForm: {
         account: 'admin',
-        password: '123456'
+        password: '930806'
       },
       fieldRules: {
         account: [
@@ -42,14 +41,22 @@ export default {
   },
   methods: {
     login () {
-      let userInfo = {account: this.loginForm.account, password: this.loginForm.password}
       this.$axios({
-        url: 'login',
-        data: JSON.stringify(userInfo)
+        url: 'jaina-security/oauth/token',
+        data: {
+          grant_type: 'password',
+          scope: 'app',
+          client_id: 'webApp',
+          client_secret: '930204',
+          username: this.loginForm.account,
+          password: this.loginForm.password
+        },
+        method: 'post'
       }).then((res) => {
+        debugger
         alert(JSON.stringify(res))
-        Cookies.set('token', res.token) // 放置token到Cookie
-        sessionStorage.setItem('user', userInfo.account) // 保存用户到本地会话
+        sessionStorage.setItem('token', res.token) // 放置token到Cookie
+        sessionStorage.setItem('user', this.loginForm.account) // 保存用户到本地会话
         this.$router.push('/') // 登录成功，跳转到主页
       }).catch(function (res) {
         alert(res.message)
