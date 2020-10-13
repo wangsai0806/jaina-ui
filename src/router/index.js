@@ -1,68 +1,170 @@
-import router from './routers'
-import store from '@/store'
-import Config from '@/settings'
-import NProgress from 'nprogress' // progress bar
-import 'nprogress/nprogress.css'// progress bar style
-import { getToken } from '@/utils/auth' // getToken from cookie
-import { buildMenus } from '@/api/menu'
-import { filterAsyncRouter } from '@/store/modules/permission'
+import Vue from 'vue'
+import Router from 'vue-router'
+import Layout from '@/views/layout/Layout'
 
-NProgress.configure({ showSpinner: false })// NProgress Configuration
-
-const whiteList = ['/login']// no redirect whitelist
-
-router.beforeEach((to, from, next) => {
-  if (to.meta.title) {
-    document.title = to.meta.title + ' - ' + Config.title
+Vue.use(Router)
+/**
+* hidden: true                   if `hidden:true` will not show in the sidebar(default is false)
+* alwaysShow: true               if set true, will always show the root menu, whatever its child routes length
+*                                if not set alwaysShow, only more than one route under the children
+*                                it will becomes nested mode, otherwise not show the root menu
+* redirect: noredirect           if `redirect:noredirect` will no redirect in the breadcrumb
+* name:'router-name'             the name is used by <keep-alive> (must set!!!)
+* meta : {
+    roles: ['admin','editor']    will control the page roles (you can set multiple roles)
+    title: 'title'               the name show in sub-menu and breadcrumb (recommend set)
+    icon: 'svg-name'             the icon show in the sidebar
+    noCache: true                if true, the page will no be cached(default is false)
+    breadcrumb: false            if false, the item will hidden in breadcrumb(default is true)
+    affix: true                  if true, the tag will affix in the tags-view
   }
-  NProgress.start()
-  if (getToken()) {
-    // 已登录且要跳转的页面是登录页
-    if (to.path === '/login') {
-      next({ path: '/' })
-      NProgress.done()
-    } else {
-      if (store.getters.roles.length === 0) { // 判断当前用户是否已拉取完user_info信息
-        store.dispatch('GetInfo').then(res => { // 拉取user_info
-          // 动态路由，拉取菜单
-          loadMenus(next, to)
-        }).catch((err) => {
-          console.log(err)
-          store.dispatch('LogOut').then(() => {
-            location.reload() // 为了重新实例化vue-router对象 避免bug
-          })
-        })
-        // 登录时未拉取 菜单，在此处拉取
-      } else if (store.getters.loadMenus) {
-        // 修改成false，防止死循环
-        store.dispatch('updateLoadMenus').then(res => {})
-        loadMenus(next, to)
-      } else {
-        next()
+**/
+export const constantRouterMap = [
+  {
+    path: '/redirect',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: '/redirect/:path*',
+        component: () => import('@/views/redirect/index')
+      }
+    ]
+  },
+  {
+    path: '',
+    component: Layout,
+    redirect: 'dashboard',
+    children: [
+      {
+        path: 'dashboard',
+        component: () => import('@/views/dashboard/index'),
+        name: 'Dashboard',
+        meta: { title: 'dashboard', icon: 'dashboard', noCache: true, affix: true }
+      }
+    ]
+  },
+  {
+    path: '/login',
+    component: () => import('@/views/login/index'),
+    hidden: true
+  },
+  {
+    path: '/404',
+    component: () => import('@/views/errorPage/404'),
+    hidden: true
+  },
+  {
+    path: '/401',
+    component: () => import('@/views/errorPage/test/401'),
+    hidden: true
+  }
+]
+export default new Router({
+  // mode: 'history', // require service support
+  scrollBehavior: () => ({ y: 0 }),
+  routes: constantRouterMap
+})
+export const asyncRouterMap = [
+  {
+    path: '/guide',
+    component: Layout,
+    redirect: '/guide/index',
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/guide/index'),
+        name: 'Guide',
+        meta: { title: 'guide', icon: 'guide', noCache: true }
+      }
+    ]
+  },
+{
+  path: '/error',
+  component: Layout,
+  redirect: 'noredirect',
+  name: 'ErrorPages',
+  meta: {
+    title: 'errorPages',
+    icon: '404'
+  },
+  children: [
+    {
+      path: '401',
+      component: () => import('@/views/errorPage/401'),
+      name: 'Page401',
+      meta: { title: 'page401', noCache: true }
+    },
+    {
+      path: '404',
+      component: () => import('@/views/errorPage/404'),
+      name: 'Page404',
+      meta: { title: 'page404', noCache: true }
+    },
+  ]
+},
+{
+  path: '/permission',
+  component: Layout,
+  redirect: '/permission/index',
+  alwaysShow: true, // will always show the root menu
+  meta: {
+    title: 'permission',
+    icon: 'lock',
+    roles: ['admin', 'editor'] // you can set roles in root nav
+  },
+  children: [
+    {
+      path: 'page',
+      component: () => import('@/views/permission/page'),
+      name: 'PagePermission',
+      meta: {
+        title: 'pagePermission',
+        roles: ['admin'] // or you can only set roles in sub nav
+      }
+    },
+    {
+      path: 'directive',
+      component: () => import('@/views/permission/directive'),
+      name: 'DirectivePermission',
+      meta: {
+        title: 'directivePermission'
+        // if do not set roles, means: this page does not require permission
       }
     }
-  } else {
-    /* has no token*/
-    if (whiteList.indexOf(to.path) !== -1) { // 在免登录白名单，直接进入
-      next()
-    } else {
-      next(`/login?redirect=${to.path}`) // 否则全部重定向到登录页
-      NProgress.done()
+  ]
+},
+{ path: '*', redirect: '/404', hidden: true },
+{
+  path: '/error1',
+  component: Layout,
+  redirect: 'noredirect',
+  name: 'ErrorPages',
+  meta: {
+    title: '第一层',icon: '404'
+  },
+  children: [
+    {
+      path: '/test',
+      component: () => import('@/views/errorPage/test/index'),
+      name: 'test',
+      redirect: 'noredirect',
+      meta: { title: '第二层',icon: '404', noCache: true },
+      children: [
+        {
+          path: 'https://www.baidu.com',
+          component: () => import('@/views/errorPage/test/401'),
+          name: 'Page401-3',
+          meta: { title: '第三层401-3',icon: '404', noCache: true }
+        },
+        {
+          path: '404-3',
+          component: () => import('@/views/errorPage/test/404-3'),
+          name: 'Page404-3',
+          meta: { title: '第三层404-3',icon: 'eye', noCache: true}
+        },
+      ]
     }
-  }
-})
-
-export const loadMenus = (next, to) => {
-  buildMenus().then(res => {
-    const asyncRouter = filterAsyncRouter(res)
-    asyncRouter.push({ path: '*', redirect: '/404', hidden: true })
-    store.dispatch('GenerateRoutes', asyncRouter).then(() => { // 存储路由
-      router.addRoutes(asyncRouter) // 动态添加可访问路由表
-      next({ ...to, replace: true })
-    })
-  })
+  ]
 }
-
-router.afterEach(() => {
-  NProgress.done() // finish progress bar
-})
+]

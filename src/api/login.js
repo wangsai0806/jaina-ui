@@ -1,35 +1,29 @@
 import request from '@/utils/request'
 
-export function login(username, password, code, uuid) {
-  return request({
-    url: 'auth/login',
-    method: 'post',
-    data: {
-      username,
-      password,
-      code,
-      uuid
+export function loginByUsername(username, password) {
+    const data = {
+        username,
+        password
     }
-  })
-}
-
-export function getInfo() {
-  return request({
-    url: 'auth/info',
-    method: 'get'
-  })
-}
-
-export function getCodeImg() {
-  return request({
-    url: 'auth/code',
-    method: 'get'
-  })
+    return request({
+        url: '/login/login',
+        method: 'post',
+        data
+    })
 }
 
 export function logout() {
-  return request({
-    url: 'auth/logout',
-    method: 'delete'
-  })
+    return request({
+        url: '/login/logout',
+        method: 'post'
+    })
 }
+
+export function getUserInfo(token) {
+    return request({
+        url: '/user/info',
+        method: 'get',
+        params: { token }
+    })
+}
+

@@ -1,41 +1,57 @@
-import { login, getInfo, logout } from '@/api/login'
+import { loginByUsername, logout, getUserInfo } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 
 const user = {
   state: {
+    user: '',
+    status: '',
+    code: '',
     token: getToken(),
-    user: {},
+    name: '',
+    avatar: '',
+    introduction: '',
     roles: [],
-    // 第一次加载菜单时用到
-    loadMenus: false
+    setting: {
+      articlePlatform: []
+    }
   },
 
   mutations: {
+    SET_CODE: (state, code) => {
+      state.code = code
+    },
     SET_TOKEN: (state, token) => {
       state.token = token
     },
-    SET_USER: (state, user) => {
-      state.user = user
+    SET_INTRODUCTION: (state, introduction) => {
+      state.introduction = introduction
+    },
+    // SET_SETTING: (state, setting) => {
+    //   state.setting = setting
+    // },
+    // SET_STATUS: (state, status) => {
+    //   state.status = status
+    // },
+    SET_NAME: (state, name) => {
+      state.name = name
+    },
+    SET_AVATAR: (state, avatar) => {
+      state.avatar = avatar
     },
     SET_ROLES: (state, roles) => {
       state.roles = roles
-    },
-    SET_LOAD_MENUS: (state, loadMenus) => {
-      state.loadMenus = loadMenus
     }
   },
 
   actions: {
-    // 登录
-    Login({ commit }, userInfo) {
-      const rememberMe = userInfo.rememberMe
+    // 用户名登录
+    LoginByUsername({ commit }, userInfo) {
+      const username = userInfo.username.trim()
       return new Promise((resolve, reject) => {
-        login(userInfo.username, userInfo.password, userInfo.code, userInfo.uuid).then(res => {
-          setToken(res.token, rememberMe)
-          commit('SET_TOKEN', res.token)
-          setUserInfo(res.user, commit)
-          // 第一次加载菜单时用到， 具体见 src 目录下的 permission.js
-          commit('SET_LOAD_MENUS', true)
+        loginByUsername(username, userInfo.password).then(response => {
+          const data = response.data
+          commit('SET_TOKEN', data.token)
+          setToken(response.data.token)
           resolve()
         }).catch(error => {
           reject(error)
@@ -44,52 +60,73 @@ const user = {
     },
 
     // 获取用户信息
-    GetInfo({ commit }) {
+    GetUserInfo({ commit, state }) {
       return new Promise((resolve, reject) => {
-        getInfo().then(res => {
-          setUserInfo(res, commit)
-          resolve(res)
+        getUserInfo(state.token).then(response => {
+          // 由于mockjs 不支持自定义状态码只能这样hack
+
+          if (!response.data) {
+            reject('Verification failed, please login again.')
+          }
+          const data = response.data
+
+          if (data.roles && data.roles.length > 0) { // 验证返回的roles是否是一个非空数组
+            commit('SET_ROLES', data.roles)
+          } else {
+            reject('getInfo: roles must be a non-null array!')
+          }
+
+          commit('SET_NAME', data.name)
+          commit('SET_AVATAR', data.avatar)
+          commit('SET_INTRODUCTION', data.introduction)
+          resolve(response)
         }).catch(error => {
           reject(error)
         })
       })
     },
+
 
     // 登出
-    LogOut({ commit }) {
+    LogOut({ commit, state }) {
       return new Promise((resolve, reject) => {
-        logout().then(res => {
-          logOut(commit)
+        logout(state.token).then(() => {
+          commit('SET_TOKEN', '')
+          commit('SET_ROLES', [])
+          removeToken()
           resolve()
         }).catch(error => {
-          logOut(commit)
           reject(error)
         })
       })
     },
 
-    updateLoadMenus({ commit }) {
-      return new Promise((resolve, reject) => {
-        commit('SET_LOAD_MENUS', false)
+    // 前端 登出
+    FedLogOut({ commit }) {
+      return new Promise(resolve => {
+        commit('SET_TOKEN', '')
+        removeToken()
+        resolve()
+      })
+    },
+
+    // 动态修改权限
+    ChangeRoles({ commit, dispatch }, role) {
+      return new Promise(resolve => {
+        commit('SET_TOKEN', role)
+        setToken(role)
+        getUserInfo(role).then(response => {
+          const data = response.data
+          commit('SET_ROLES', data.roles)
+          commit('SET_NAME', data.name)
+          commit('SET_AVATAR', data.avatar)
+          commit('SET_INTRODUCTION', data.introduction)
+          dispatch('GenerateRoutes', data) // 动态修改权限后 重绘侧边菜单
+          resolve()
+        })
       })
     }
   }
-}
-
-export const logOut = (commit) => {
-  commit('SET_TOKEN', '')
-  commit('SET_ROLES', [])
-  removeToken()
-}
-
-export const setUserInfo = (res, commit) => {
-  // 如果没有任何权限，则赋予一个默认的权限，避免请求死循环
-  if (res.roles.length === 0) {
-    commit('SET_ROLES', ['ROLE_SYSTEM_DEFAULT'])
-  } else {
-    commit('SET_ROLES', res.roles)
-  }
-  commit('SET_USER', res)
 }
 
 export default user

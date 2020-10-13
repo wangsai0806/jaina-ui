@@ -20,11 +20,10 @@ export default {
     isActive: {
       type: Boolean,
       default: false
-    }
-  },
-  methods: {
-    toggleClick() {
-      this.$emit('toggleClick')
+    },
+    toggleClick: {
+      type: Function,
+      default: null
     }
   }
 }
@@ -37,7 +36,8 @@ export default {
   width: 20px;
   height: 20px;
 }
+
 .hamburger.is-active {
-	transform: rotate(180deg);
+  transform: rotate(180deg);
 }
 </style>

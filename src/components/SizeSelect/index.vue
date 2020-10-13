@@ -4,10 +4,8 @@
       <svg-icon class-name="size-icon" icon-class="size" />
     </div>
     <el-dropdown-menu slot="dropdown">
-      <el-dropdown-item v-for="item of sizeOptions" :key="item.value" :disabled="size===item.value" :command="item.value">
-        {{
-          item.label }}
-      </el-dropdown-item>
+      <el-dropdown-item v-for="item of sizeOptions" :key="item.value" :disabled="size===item.value" :command="item.value">{{
+      item.label }}</el-dropdown-item>
     </el-dropdown-menu>
   </el-dropdown>
 </template>
@@ -32,16 +30,16 @@ export default {
   methods: {
     handleSetSize(size) {
       this.$ELEMENT.size = size
-      this.$store.dispatch('app/setSize', size)
+      this.$store.dispatch('setSize', size)
       this.refreshView()
       this.$message({
-        message: '布局设置成功',
+        message: 'Switch Size Success',
         type: 'success'
       })
     },
     refreshView() {
       // In order to make the cached page re-rendered
-      this.$store.dispatch('tagsView/delAllCachedViews', this.$route)
+      this.$store.dispatch('delAllCachedViews', this.$route)
       const { fullPath } = this.$route
       this.$nextTick(() => {
         this.$router.replace({
@@ -50,5 +48,6 @@ export default {
       })
     }
   }
+
 }
 </script>

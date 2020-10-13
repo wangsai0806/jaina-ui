@@ -10,18 +10,17 @@
       remote
       placeholder="Search"
       class="header-search-select"
-      @change="change"
-    >
-      <el-option v-for="item in options" :key="item.path" :value="item" :label="item.title.join(' > ')" />
+      @change="change">
+      <el-option v-for="item in options" :key="item.path" :value="item" :label="item.title.join(' > ')"/>
     </el-select>
   </div>
 </template>
 
 <script>
-// fuse is a lightweight fuzzy-search module
-// make search results more in line with expectations
 import Fuse from 'fuse.js'
 import path from 'path'
+import i18n from '@/lang'
+
 export default {
   name: 'HeaderSearch',
   data() {
@@ -34,13 +33,19 @@ export default {
     }
   },
   computed: {
-    routes() {
-      return this.$store.state.permission.routers
+    routers() {
+      return this.$store.getters.permission_routers
+    },
+    lang() {
+      return this.$store.getters.language
     }
   },
   watch: {
-    routes() {
-      this.searchPool = this.generateRoutes(this.routes)
+    lang() {
+      this.searchPool = this.generateRouters(this.routers)
+    },
+    routers() {
+      this.searchPool = this.generateRouters(this.routers)
     },
     searchPool(list) {
       this.initFuse(list)
@@ -54,7 +59,7 @@ export default {
     }
   },
   mounted() {
-    this.searchPool = this.generateRoutes(this.routes)
+    this.searchPool = this.generateRouters(this.routers)
   },
   methods: {
     click() {
@@ -95,28 +100,36 @@ export default {
     },
     // Filter out the routes that can be displayed in the sidebar
     // And generate the internationalized title
-    generateRoutes(routes, basePath = '/', prefixTitle = []) {
+    generateRouters(routers, basePath = '/', prefixTitle = []) {
       let res = []
-      for (const router of routes) {
+
+      for (const router of routers) {
         // skip hidden router
         if (router.hidden) { continue }
+
         const data = {
           path: path.resolve(basePath, router.path),
           title: [...prefixTitle]
         }
+
         if (router.meta && router.meta.title) {
-          data.title = [...data.title, router.meta.title]
-          if (router.redirect !== 'noRedirect') {
+          // generate internationalized title
+          const i18ntitle = i18n.t(`route.${router.meta.title}`)
+
+          data.title = [...data.title, i18ntitle]
+
+          if (router.redirect !== 'noredirect') {
             // only push the routes with title
             // special case: need to exclude parent router without redirect
             res.push(data)
           }
         }
-        // recursive child routes
+
+        // recursive child routers
         if (router.children) {
-          const tempRoutes = this.generateRoutes(router.children, data.path, data.title)
-          if (tempRoutes.length >= 1) {
-            res = [...res, ...tempRoutes]
+          const tempRouters = this.generateRouters(router.children, data.path, data.title)
+          if (tempRouters.length >= 1) {
+            res = [...res, ...tempRouters]
           }
         }
       }
@@ -134,37 +147,41 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  .header-search {
-    font-size: 0 !important;
-    .search-icon {
-      cursor: pointer;
-      font-size: 18px;
-      vertical-align: middle;
-    }
-    .header-search-select {
-      font-size: 18px;
-      transition: width 0.2s;
-      width: 0;
-      overflow: hidden;
-      background: transparent;
+.header-search {
+  font-size: 0 !important;
+
+  .search-icon {
+    cursor: pointer;
+    font-size: 18px;
+    vertical-align: middle;
+  }
+
+  .header-search-select {
+    font-size: 18px;
+    transition: width 0.2s;
+    width: 0;
+    overflow: hidden;
+    background: transparent;
+    border-radius: 0;
+    display: inline-block;
+    vertical-align: middle;
+
+    /deep/ .el-input__inner {
       border-radius: 0;
-      display: inline-block;
+      border: 0;
+      padding-left: 0;
+      padding-right: 0;
+      box-shadow: none !important;
+      border-bottom: 1px solid #d9d9d9;
       vertical-align: middle;
-      /deep/ .el-input__inner {
-        border-radius: 0;
-        border: 0;
-        padding-left: 0;
-        padding-right: 0;
-        box-shadow: none !important;
-        border-bottom: 1px solid #d9d9d9;
-        vertical-align: middle;
-      }
-    }
-    &.show {
-      .header-search-select {
-        width: 210px;
-        margin-left: 10px;
-      }
     }
   }
+
+  &.show {
+    .header-search-select {
+      width: 210px;
+      margin-left: 10px;
+    }
+  }
+}
 </style>
